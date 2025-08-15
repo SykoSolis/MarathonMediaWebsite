@@ -98,40 +98,33 @@ if (contactForm) {
         
         // Get form data
         const formData = new FormData(this);
-        const data = {};
+        const data = {
+            services: [] // Initialize services array
+        };
         
-        // Convert FormData to regular object
+        // Convert FormData to regular object (excluding checkboxes first)
         for (let [key, value] of formData.entries()) {
-            if (data[key]) {
-                // Handle multiple values (like checkboxes)
-                if (Array.isArray(data[key])) {
-                    data[key].push(value);
-                } else {
-                    data[key] = [data[key], value];
-                }
-            } else {
+            if (key !== 'services') { // Handle services separately
                 data[key] = value;
             }
         }
         
         // Handle checkboxes separately
-        const services = [];
         const serviceCheckboxes = document.querySelectorAll('input[name="services"]:checked');
         serviceCheckboxes.forEach(checkbox => {
-            services.push(checkbox.value);
+            data.services.push(checkbox.value);
         });
-        data.services = services;
         
         // Show success message (in a real application, you would send this to a server)
         showFormSuccess();
-        
-        // Reset form
-        this.reset();
         
         // Send to admin panel if available
         if (window.adminPanel) {
             window.adminPanel.addMessage(data);
         }
+        
+        // Reset form after sending to admin panel
+        this.reset();
     });
 }
 

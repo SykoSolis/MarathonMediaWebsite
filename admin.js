@@ -13,6 +13,9 @@ class AdminPanel {
         this.loadStoredMessages();
         this.bindEvents();
         this.checkLoginStatus();
+        
+        // Make adminPanel globally available immediately
+        window.adminPanel = this;
     }
     
     bindEvents() {
@@ -127,6 +130,9 @@ class AdminPanel {
         
         this.messages.unshift(message);
         this.saveMessages();
+        
+        // Log for debugging
+        console.log('New message added:', message);
         
         if (this.isLoggedIn) {
             this.updateStats();
@@ -468,6 +474,3 @@ class AdminPanel {
 
 // Initialize admin panel
 const adminPanel = new AdminPanel();
-
-// Make adminPanel globally available for contact form integration
-window.adminPanel = adminPanel;
