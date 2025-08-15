@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Marathon Media</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="public/marathon_2.PNG" alt="Marathon Media" class="logo">
+                <span class="logo-text">Marathon Media</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="services.html" class="nav-link">Services</a></li>
+                <li><a href="team.html" class="nav-link">Team</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="admin.html" class="nav-link admin-link active">Admin</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-form">
+                <div class="login-header">
+                    <h2>Admin Login</h2>
+                    <p>Access the Marathon Media admin panel</p>
+                </div>
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-large">Login</button>
+                </form>
+                <div id="loginError" class="login-error" style="display: none;">
+                    Invalid credentials. Please try again.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <div class="container">
+                <div class="admin-header-content">
+                    <h1>Admin Dashboard</h1>
+                    <div class="admin-actions">
+                        <span class="admin-user">Welcome, Admin</span>
+                        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <section class="dashboard-stats">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📧</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="totalMessages">0</div>
+                            <div class="stat-label">Total Messages</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📬</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="unreadMessages">0</div>
+                            <div class="stat-label">Unread Messages</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="repliedMessages">0</div>
+                            <div class="stat-label">Replied</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="todayMessages">0</div>
+                            <div class="stat-label">Today</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Messages Section -->
+        <section class="messages-section">
+            <div class="container">
+                <div class="messages-header">
+                    <h2>Contact Messages</h2>
+                    <div class="messages-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="unread">Unread</button>
+                        <button class="filter-btn" data-filter="replied">Replied</button>
+                    </div>
+                </div>
+                <div class="messages-container">
+                    <div id="messagesList" class="messages-list">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Message Details</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="messageDetails" class="message-details">
+                    <!-- Message details will be loaded here -->
+                </div>
+                <div class="reply-section">
+                    <h4>Send Reply</h4>
+                    <form id="replyForm">
+                        <div class="form-group">
+                            <label for="replySubject">Subject</label>
+                            <input type="text" id="replySubject" name="subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="replyMessage">Message</label>
+                            <textarea id="replyMessage" name="message" rows="6" required placeholder="Type your reply here..."></textarea>
+                        </div>
+                        <div class="reply-actions">
+                            <button type="submit" class="btn btn-primary">Send Reply</button>
+                            <button type="button" class="btn btn-secondary" id="cancelReply">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

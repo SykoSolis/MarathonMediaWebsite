@@ -127,6 +127,11 @@ if (contactForm) {
         
         // Reset form
         this.reset();
+        
+        // Send to admin panel if available
+        if (window.adminPanel) {
+            window.adminPanel.addMessage(data);
+        }
     });
 }
 

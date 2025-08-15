@@ -108,6 +108,16 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
 }
 
+.admin-link {
+    background: rgba(223, 195, 104, 0.1);
+    border-radius: 6px;
+    padding: 0.5rem 1rem !important;
+}
+
+.admin-link:hover {
+    background: rgba(223, 195, 104, 0.2);
+}
+
 .hamburger {
     display: none;
     flex-direction: column;
