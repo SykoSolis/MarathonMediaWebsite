@@ -104,19 +104,78 @@ class AdminPanel {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
         this.isLoggedIn = true;
-        this.updateStats();
-        this.renderMessages();
+        
+        // Load messages first, then update UI
+        this.loadMessagesFromFile().then(() => {
+            this.updateStats();
+            this.renderMessages();
+        });
     }
     
     loadStoredMessages() {
-        const stored = localStorage.getItem('contactMessages');
-        if (stored) {
-            this.messages = JSON.parse(stored);
+        this.loadMessagesFromFile();
+    }
+    
+    async loadMessagesFromFile() {
+        try {
+            console.log('Loading messages from file...');
+            const response = await fetch('messages.json');
+            if (response.ok) {
+                this.messages = await response.json();
+                console.log('Loaded messages from file:', this.messages);
+            } else {
+                console.log('No messages file found, checking localStorage...');
+                // Fallback to localStorage
+                const stored = localStorage.getItem('contactMessages');
+                if (stored) {
+                    this.messages = JSON.parse(stored);
+                    console.log('Loaded messages from localStorage:', this.messages);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+            // Fallback to localStorage
+            const stored = localStorage.getItem('contactMessages');
+            if (stored) {
+                this.messages = JSON.parse(stored);
+                console.log('Loaded messages from localStorage fallback:', this.messages);
+            }
+        }
+        
+        // Update UI if logged in
+        if (this.isLoggedIn) {
+            this.updateStats();
+            this.renderMessages();
         }
     }
     
     saveMessages() {
+        // Save to localStorage as backup
         localStorage.setItem('contactMessages', JSON.stringify(this.messages));
+        
+        // Also try to save to file
+        this.saveMessagesToFile();
+    }
+    
+    async saveMessagesToFile() {
+        try {
+            const blob = new Blob([JSON.stringify(this.messages, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create download link to save file
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'messages.json';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('Messages saved to file');
+        } catch (error) {
+            console.error('Error saving messages to file:', error);
+        }
     }
     
     addMessage(messageData) {
@@ -133,6 +192,7 @@ class AdminPanel {
         
         // Log for debugging
         console.log('New message added:', message);
+        console.log('Total messages now:', this.messages.length);
         
         if (this.isLoggedIn) {
             this.updateStats();

@@ -116,7 +116,71 @@ if (contactForm) {
         
         console.log('Form data collected:', messageData);
         
-        // Save to localStorage directly
+        // Save message to JSON file
+        saveMessageToFile(messageData);
+        
+        // Show success message
+        showFormSuccess();
+        
+        // Reset form
+        this.reset();
+    });
+}
+
+async function saveMessageToFile(messageData) {
+    try {
+        // Create new message object
+        const newMessage = {
+            id: Date.now() + Math.random(),
+            ...messageData,
+            timestamp: new Date().toISOString(),
+            status: 'unread',
+            replies: []
+        };
+        
+        console.log('Saving message:', newMessage);
+        
+        // Read existing messages
+        let existingMessages = [];
+        try {
+            const response = await fetch('messages.json');
+            if (response.ok) {
+                existingMessages = await response.json();
+            }
+        } catch (error) {
+            console.log('No existing messages file or error reading it:', error);
+        }
+        
+        // Add new message to the beginning
+        existingMessages.unshift(newMessage);
+        
+        // Save back to file
+        const blob = new Blob([JSON.stringify(existingMessages, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link to save file
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'messages.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('Message saved successfully');
+        
+        // Also save to localStorage as backup
+        localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
+        
+        // Notify admin panel if available
+        if (window.adminPanel && typeof window.adminPanel.addMessage === 'function') {
+            window.adminPanel.addMessage(messageData);
+        }
+        
+    } catch (error) {
+        console.error('Error saving message:', error);
+        
+        // Fallback to localStorage
         const existingMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
         const newMessage = {
             id: Date.now() + Math.random(),
@@ -129,25 +193,9 @@ if (contactForm) {
         existingMessages.unshift(newMessage);
         localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
         
-        console.log('Message saved to localStorage:', newMessage);
-        console.log('All messages:', existingMessages);
-        
-        // Also try to send to admin panel if it exists
-        if (window.adminPanel && typeof window.adminPanel.addMessage === 'function') {
-            console.log('Sending to admin panel...');
-            window.adminPanel.addMessage(messageData);
-        } else {
-            console.log('Admin panel not available, but message saved to localStorage');
-        }
-        
-        // Show success message
-        showFormSuccess();
-        
-        // Reset form
-        this.reset();
-    });
+        console.log('Saved to localStorage as fallback');
+    }
 }
-
 function showFormSuccess() {
     // Create success message
     const successMessage = document.createElement('div');
