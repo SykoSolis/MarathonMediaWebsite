@@ -96,34 +96,54 @@ if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // Get form data
+        // Collect form data
         const formData = new FormData(this);
-        const data = {
-            services: [] // Initialize services array
-        };
+        const messageData = {};
         
-        // Convert FormData to regular object (excluding checkboxes first)
+        // Get all form fields
         for (let [key, value] of formData.entries()) {
-            if (key !== 'services') { // Handle services separately
-                data[key] = value;
+            if (key !== 'services') {
+                messageData[key] = value;
             }
         }
         
-        // Handle checkboxes separately
-        const serviceCheckboxes = document.querySelectorAll('input[name="services"]:checked');
-        serviceCheckboxes.forEach(checkbox => {
-            data.services.push(checkbox.value);
+        // Handle services checkboxes
+        messageData.services = [];
+        const checkedServices = document.querySelectorAll('input[name="services"]:checked');
+        checkedServices.forEach(checkbox => {
+            messageData.services.push(checkbox.value);
         });
         
-        // Show success message (in a real application, you would send this to a server)
-        showFormSuccess();
+        console.log('Form data collected:', messageData);
         
-        // Send to admin panel if available
-        if (window.adminPanel) {
-            window.adminPanel.addMessage(data);
+        // Save to localStorage directly
+        const existingMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+        const newMessage = {
+            id: Date.now() + Math.random(),
+            ...messageData,
+            timestamp: new Date().toISOString(),
+            status: 'unread',
+            replies: []
+        };
+        
+        existingMessages.unshift(newMessage);
+        localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
+        
+        console.log('Message saved to localStorage:', newMessage);
+        console.log('All messages:', existingMessages);
+        
+        // Also try to send to admin panel if it exists
+        if (window.adminPanel && typeof window.adminPanel.addMessage === 'function') {
+            console.log('Sending to admin panel...');
+            window.adminPanel.addMessage(messageData);
+        } else {
+            console.log('Admin panel not available, but message saved to localStorage');
         }
         
-        // Reset form after sending to admin panel
+        // Show success message
+        showFormSuccess();
+        
+        // Reset form
         this.reset();
     });
 }
