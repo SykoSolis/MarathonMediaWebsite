@@ -127,18 +127,38 @@ class AdminPanel {
     }
     
     loadMessagesFromStorage() {
+        this.loadMessagesFromServer();
+    }
+    
+    async loadMessagesFromServer() {
         try {
-            const stored = localStorage.getItem('contactMessages');
-            if (stored) {
-                this.messages = JSON.parse(stored);
-                console.log('Loaded messages from localStorage:', this.messages.length);
+            console.log('Loading messages from server...');
+            const response = await fetch('save-message.php');
+            
+            if (response.ok) {
+                this.messages = await response.json();
+                console.log('Loaded messages from server:', this.messages.length);
             } else {
-                this.messages = [];
-                console.log('No messages found in localStorage');
+                throw new Error('Failed to load messages from server');
             }
         } catch (error) {
-            console.error('Error loading messages from localStorage:', error);
-            this.messages = [];
+            console.error('Error loading messages from server:', error);
+            console.log('Falling back to localStorage...');
+            
+            // Fallback to localStorage
+            try {
+                const stored = localStorage.getItem('contactMessages');
+                if (stored) {
+                    this.messages = JSON.parse(stored);
+                    console.log('Loaded messages from localStorage:', this.messages.length);
+                } else {
+                    this.messages = [];
+                    console.log('No messages found in localStorage');
+                }
+            } catch (localError) {
+                console.error('Error loading messages from localStorage:', localError);
+                this.messages = [];
+            }
         }
         
         // Update UI if logged in
@@ -409,27 +429,45 @@ class AdminPanel {
         submitBtn.disabled = true;
         
         try {
-            // Simulate email sending (in a real application, this would call your email service)
+            // Update message status on server
+            const response = await fetch('update-message.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: this.currentMessage.id,
+                    reply: {
+                        subject: subject,
+                        message: messageText
+                    }
+                })
+            });
+            
+            if (response.ok) {
+                // Update local message status
+                this.currentMessage.status = 'replied';
+                this.currentMessage.replies.push({
+                    subject: subject,
+                    message: messageText,
+                    timestamp: new Date().toISOString()
+                });
+                
+                this.updateStats();
+                this.renderMessages();
+                
+                this.showAlert('Reply saved successfully! (Email integration pending)', 'success');
+            } else {
+                throw new Error('Failed to save reply');
+            }
+            
+            // TODO: Implement actual email sending here
             await this.sendEmail({
                 to: this.currentMessage.email,
                 subject: subject,
                 message: messageText,
                 originalMessage: this.currentMessage
             });
-            
-            // Update message status
-            this.currentMessage.status = 'replied';
-            this.currentMessage.replies.push({
-                subject: subject,
-                message: messageText,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.saveMessages();
-            this.updateStats();
-            this.renderMessages();
-            
-            this.showAlert('Reply sent successfully!', 'success');
             
             // Close modal after a short delay
             setTimeout(() => {

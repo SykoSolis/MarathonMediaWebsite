@@ -129,59 +129,36 @@ if (contactForm) {
 
 async function saveMessageToFile(messageData) {
     try {
-        // Create new message object
-        const newMessage = {
-            id: Date.now() + Math.random(),
-            ...messageData,
-            timestamp: new Date().toISOString(),
-            status: 'unread',
-            replies: []
-        };
+        console.log('Saving message to server:', messageData);
         
-        console.log('Saving message:', newMessage);
+        // Send message to server
+        const response = await fetch('save-message.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData)
+        });
         
-        // Read existing messages
-        let existingMessages = [];
-        try {
-            const response = await fetch('messages.json');
-            if (response.ok) {
-                existingMessages = await response.json();
-            }
-        } catch (error) {
-            console.log('No existing messages file or error reading it:', error);
-        }
-        
-        // Add new message to the beginning
-        existingMessages.unshift(newMessage);
-        
-        // Save back to file
-        const blob = new Blob([JSON.stringify(existingMessages, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        // Create download link to save file
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'messages.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        console.log('Message saved successfully');
-        
-        // Also save to localStorage as backup
-        localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
-        
-        // Notify admin panel if available
-        if (window.adminPanel && typeof window.adminPanel.addMessage === 'function') {
-            window.adminPanel.addMessage(messageData);
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Message saved successfully:', result);
+        } else {
+            throw new Error('Failed to save message to server');
         }
         
     } catch (error) {
         console.error('Error saving message:', error);
         
-        // Fallback to localStorage
-        const existingMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+        // Fallback to localStorage if server fails
+        console.log('Falling back to localStorage');
+        let existingMessages = [];
+        try {
+            existingMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+        } catch (e) {
+            console.error('Error reading localStorage:', e);
+        }
+        
         const newMessage = {
             id: Date.now() + Math.random(),
             ...messageData,
@@ -193,7 +170,7 @@ async function saveMessageToFile(messageData) {
         existingMessages.unshift(newMessage);
         localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
         
-        console.log('Saved to localStorage as fallback');
+        console.log('Saved to localStorage as fallback:', existingMessages.length, 'messages');
     }
 }
 function showFormSuccess() {
