@@ -105,41 +105,40 @@ class AdminPanel {
         document.getElementById('adminPanel').style.display = 'block';
         this.isLoggedIn = true;
         
-        // Load messages first, then update UI
-        this.loadMessagesFromFile().then(() => {
-            this.updateStats();
-            this.renderMessages();
-        });
+        // Load messages and update UI
+        this.loadMessagesFromStorage();
     }
     
     loadStoredMessages() {
-        this.loadMessagesFromFile();
-    }
-    
-    async loadMessagesFromFile() {
+        // Load from localStorage
         try {
-            console.log('Loading messages from file...');
-            const response = await fetch('messages.json');
-            if (response.ok) {
-                this.messages = await response.json();
-                console.log('Loaded messages from file:', this.messages);
-            } else {
-                console.log('No messages file found, checking localStorage...');
-                // Fallback to localStorage
-                const stored = localStorage.getItem('contactMessages');
-                if (stored) {
-                    this.messages = JSON.parse(stored);
-                    console.log('Loaded messages from localStorage:', this.messages);
-                }
-            }
-        } catch (error) {
-            console.error('Error loading messages:', error);
-            // Fallback to localStorage
             const stored = localStorage.getItem('contactMessages');
             if (stored) {
                 this.messages = JSON.parse(stored);
-                console.log('Loaded messages from localStorage fallback:', this.messages);
+                console.log('Loaded messages from localStorage:', this.messages.length);
+            } else {
+                this.messages = [];
+                console.log('No messages found in localStorage');
             }
+        } catch (error) {
+            console.error('Error loading messages from localStorage:', error);
+            this.messages = [];
+        }
+    }
+    
+    loadMessagesFromStorage() {
+        try {
+            const stored = localStorage.getItem('contactMessages');
+            if (stored) {
+                this.messages = JSON.parse(stored);
+                console.log('Loaded messages from localStorage:', this.messages.length);
+            } else {
+                this.messages = [];
+                console.log('No messages found in localStorage');
+            }
+        } catch (error) {
+            console.error('Error loading messages from localStorage:', error);
+            this.messages = [];
         }
         
         // Update UI if logged in
@@ -150,32 +149,9 @@ class AdminPanel {
     }
     
     saveMessages() {
-        // Save to localStorage as backup
+        // Save to localStorage
         localStorage.setItem('contactMessages', JSON.stringify(this.messages));
-        
-        // Also try to save to file
-        this.saveMessagesToFile();
-    }
-    
-    async saveMessagesToFile() {
-        try {
-            const blob = new Blob([JSON.stringify(this.messages, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            // Create download link to save file
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'messages.json';
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            console.log('Messages saved to file');
-        } catch (error) {
-            console.error('Error saving messages to file:', error);
-        }
+        console.log('Messages saved to localStorage:', this.messages.length);
     }
     
     addMessage(messageData) {
@@ -187,7 +163,13 @@ class AdminPanel {
             replies: []
         };
         
+        // Load existing messages first to avoid overwriting
+        this.loadStoredMessages();
+        
+        // Add new message to the beginning
         this.messages.unshift(message);
+        
+        // Save all messages
         this.saveMessages();
         
         // Log for debugging
