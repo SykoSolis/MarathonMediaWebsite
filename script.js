@@ -128,7 +128,9 @@ if (contactForm) {
 }
 
 async function saveMessageToFile(messageData) {
-    // Create new message object
+    // For static websites, we'll use EmailJS to send messages via email
+    // and localStorage for admin panel demo purposes
+    
     const newMessage = {
         id: Date.now() + Math.random(),
         ...messageData,
@@ -137,52 +139,26 @@ async function saveMessageToFile(messageData) {
         replies: []
     };
     
-    // Load existing messages from JSON file
+    // Save to localStorage for admin panel demo
     let existingMessages = [];
     try {
-        const response = await fetch('messages.json');
-        if (response.ok) {
-            existingMessages = await response.json();
+        const stored = localStorage.getItem('contactMessages');
+        if (stored) {
+            existingMessages = JSON.parse(stored);
         }
     } catch (error) {
-        console.log('No existing messages file, starting fresh');
+        console.log('Starting fresh message list');
     }
     
-    // Add new message to the beginning
     existingMessages.unshift(newMessage);
+    localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
     
-    // Save updated messages to JSON file
-    try {
-        const blob = new Blob([JSON.stringify(existingMessages, null, 2)], {
-            type: 'application/json'
-        });
-        
-        // Create download link to update the JSON file
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'messages.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        console.log('Message saved to JSON file:', newMessage);
-        
-        // Also save to localStorage as backup
-        localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
-        
-        // Notify admin panel if it exists
-        if (window.adminPanel) {
-            window.adminPanel.addMessage(messageData);
-        }
-        
-    } catch (error) {
-        console.error('Error saving to JSON file:', error);
-        
-        // Fallback to localStorage only
-        localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
-        console.log('Saved to localStorage as fallback');
+    // Send email notification (you would need to set up EmailJS)
+    console.log('Message saved locally for admin demo:', newMessage);
+    
+    // Notify admin panel if it exists
+    if (window.adminPanel) {
+        window.adminPanel.addMessage(newMessage);
     }
 }
 function showFormSuccess() {
