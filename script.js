@@ -128,49 +128,61 @@ if (contactForm) {
 }
 
 async function saveMessageToFile(messageData) {
+    // Create new message object
+    const newMessage = {
+        id: Date.now() + Math.random(),
+        ...messageData,
+        timestamp: new Date().toISOString(),
+        status: 'unresponded',
+        replies: []
+    };
+    
+    // Load existing messages from JSON file
+    let existingMessages = [];
     try {
-        console.log('Saving message to server:', messageData);
-        
-        // Send message to server
-        const response = await fetch('save-message.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(messageData)
+        const response = await fetch('messages.json');
+        if (response.ok) {
+            existingMessages = await response.json();
+        }
+    } catch (error) {
+        console.log('No existing messages file, starting fresh');
+    }
+    
+    // Add new message to the beginning
+    existingMessages.unshift(newMessage);
+    
+    // Save updated messages to JSON file
+    try {
+        const blob = new Blob([JSON.stringify(existingMessages, null, 2)], {
+            type: 'application/json'
         });
         
-        if (response.ok) {
-            const result = await response.json();
-            console.log('Message saved successfully:', result);
-        } else {
-            throw new Error('Failed to save message to server');
+        // Create download link to update the JSON file
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'messages.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('Message saved to JSON file:', newMessage);
+        
+        // Also save to localStorage as backup
+        localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
+        
+        // Notify admin panel if it exists
+        if (window.adminPanel) {
+            window.adminPanel.addMessage(messageData);
         }
         
     } catch (error) {
-        console.error('Error saving message:', error);
+        console.error('Error saving to JSON file:', error);
         
-        // Fallback to localStorage if server fails
-        console.log('Falling back to localStorage');
-        let existingMessages = [];
-        try {
-            existingMessages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
-        } catch (e) {
-            console.error('Error reading localStorage:', e);
-        }
-        
-        const newMessage = {
-            id: Date.now() + Math.random(),
-            ...messageData,
-            timestamp: new Date().toISOString(),
-            status: 'unread',
-            replies: []
-        };
-        
-        existingMessages.unshift(newMessage);
+        // Fallback to localStorage only
         localStorage.setItem('contactMessages', JSON.stringify(existingMessages));
-        
-        console.log('Saved to localStorage as fallback:', existingMessages.length, 'messages');
+        console.log('Saved to localStorage as fallback');
     }
 }
 function showFormSuccess() {

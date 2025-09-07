@@ -205,7 +205,11 @@
     border-left: 4px solid #dfc368;
 }
 
-.message-item.replied {
+.message-item.unresponded {
+    border-left: 4px solid #dfc368;
+}
+
+.message-item.responded {
     border-left: 4px solid #28a745;
 }
 
@@ -257,7 +261,12 @@
     color: #dfc368;
 }
 
-.status-replied {
+.status-unresponded {
+    background: rgba(223, 195, 104, 0.2);
+    color: #dfc368;
+}
+
+.status-responded {
     background: rgba(40, 167, 69, 0.2);
     color: #28a745;
 }
@@ -285,6 +294,28 @@
     border-radius: 8px;
     font-size: 0.75rem;
     font-weight: 500;
+}
+
+.status-toggle {
+    background: rgba(223, 195, 104, 0.2);
+    border: 1px solid rgba(223, 195, 104, 0.5);
+    color: #dfc368;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.status-toggle:hover {
+    background: #dfc368;
+    color: #0f1329;
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
 }
 
 /* Modal */

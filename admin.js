@@ -127,22 +127,22 @@ class AdminPanel {
     }
     
     loadMessagesFromStorage() {
-        this.loadMessagesFromServer();
+        this.loadMessagesFromJSON();
     }
     
-    async loadMessagesFromServer() {
+    async loadMessagesFromJSON() {
         try {
-            console.log('Loading messages from server...');
-            const response = await fetch('save-message.php');
+            console.log('Loading messages from JSON file...');
+            const response = await fetch('messages.json');
             
             if (response.ok) {
                 this.messages = await response.json();
-                console.log('Loaded messages from server:', this.messages.length);
+                console.log('Loaded messages from JSON file:', this.messages.length);
             } else {
-                throw new Error('Failed to load messages from server');
+                throw new Error('Failed to load messages from JSON file');
             }
         } catch (error) {
-            console.error('Error loading messages from server:', error);
+            console.error('Error loading messages from JSON file:', error);
             console.log('Falling back to localStorage...');
             
             // Fallback to localStorage
@@ -150,7 +150,7 @@ class AdminPanel {
                 const stored = localStorage.getItem('contactMessages');
                 if (stored) {
                     this.messages = JSON.parse(stored);
-                    console.log('Loaded messages from localStorage:', this.messages.length);
+                    console.log('Loaded messages from localStorage as fallback:', this.messages.length);
                 } else {
                     this.messages = [];
                     console.log('No messages found in localStorage');
@@ -232,10 +232,10 @@ class AdminPanel {
     
     getFilteredMessages() {
         switch (this.currentFilter) {
-            case 'unread':
-                return this.messages.filter(m => m.status === 'unread');
-            case 'replied':
-                return this.messages.filter(m => m.status === 'replied');
+            case 'unresponded':
+                return this.messages.filter(m => m.status === 'unresponded');
+            case 'responded':
+                return this.messages.filter(m => m.status === 'responded');
             default:
                 return this.messages;
         }
@@ -265,6 +265,15 @@ class AdminPanel {
                 this.openMessage(messageId);
             });
         });
+        
+        // Add status toggle handlers
+        container.querySelectorAll('.status-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent opening message
+                const messageId = btn.dataset.messageId;
+                this.toggleMessageStatus(messageId);
+            });
+        });
     }
     
     renderMessageItem(message) {
@@ -282,6 +291,10 @@ class AdminPanel {
                 ${services.map(service => `<span class="service-tag">${this.formatServiceName(service)}</span>`).join('')}
             </div>` : '';
         
+        const statusClass = message.status === 'responded' ? 'responded' : 'unresponded';
+        const statusText = message.status === 'responded' ? 'Responded' : 'Unresponded';
+        const toggleText = message.status === 'responded' ? 'Mark Unresponded' : 'Mark Responded';
+        
         return `
             <div class="message-item ${message.status}" data-message-id="${message.id}">
                 <div class="message-header">
@@ -292,8 +305,11 @@ class AdminPanel {
                     <div class="message-meta">
                         <div class="message-date">${date}</div>
                         <div class="message-status status-${message.status}">
-                            ${message.status === 'unread' ? 'Unread' : 'Replied'}
+                            ${statusText}
                         </div>
+                        <button class="status-toggle btn-small" data-message-id="${message.id}">
+                            ${toggleText}
+                        </button>
                     </div>
                 </div>
                 <div class="message-preview">${this.escapeHtml(message.message).substring(0, 150)}${message.message.length > 150 ? '...' : ''}</div>
@@ -321,8 +337,8 @@ class AdminPanel {
         this.currentMessage = message;
         
         // Mark as read
-        if (message.status === 'unread') {
-            message.status = 'read';
+        if (message.status === 'unresponded') {
+            // Don't auto-change status, let admin manually control it
             this.saveMessages();
             this.updateStats();
             this.renderMessages();
@@ -549,6 +565,46 @@ class AdminPanel {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    toggleMessageStatus(messageId) {
+        const message = this.messages.find(m => m.id == messageId);
+        if (!message) return;
+        
+        // Toggle status
+        message.status = message.status === 'responded' ? 'unresponded' : 'responded';
+        
+        // Save messages
+        this.saveMessages();
+        this.updateMessagesFile();
+        
+        // Update UI
+        this.updateStats();
+        this.renderMessages();
+        
+        console.log(`Message ${messageId} status changed to: ${message.status}`);
+    }
+    
+    async updateMessagesFile() {
+        try {
+            const blob = new Blob([JSON.stringify(this.messages, null, 2)], {
+                type: 'application/json'
+            });
+            
+            // Create download link to update the JSON file
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'messages.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('Messages file updated');
+        } catch (error) {
+            console.error('Error updating messages file:', error);
+        }
     }
 }
 
